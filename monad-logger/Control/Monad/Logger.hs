@@ -170,6 +170,7 @@ data Loc
     , loc_module   :: String
     , loc_start    :: CharPos
     , loc_end      :: CharPos }
+    deriving (Eq)
 type CharPos = (Int, Int)
 
 #endif
@@ -518,9 +519,12 @@ defaultLogStr loc src level msg =
         else "#" `mappend` toLogStr src) `mappend`
     "] " `mappend`
     msg `mappend`
-    " @(" `mappend`
-    toLogStr (S8.pack fileLocStr) `mappend`
-    ")\n"
+    (if loc == defaultLoc
+        then mempty
+        else " @(" `mappend`
+             toLogStr (S8.pack fileLocStr) `mappend`
+             ")") `mappend`
+    "\n"
 #else
     S8.concat
         [ S8.pack "["
@@ -534,9 +538,13 @@ defaultLogStr loc src level msg =
         , case msg of
             LS s -> encodeUtf8 $ pack s
             LB b -> b
-        , S8.pack " @("
-        , encodeUtf8 $ pack fileLocStr
-        , S8.pack ")\n"
+        , if loc == defaultLoc
+            then S8.empty
+            else S8.concat [ S8.pack " @("
+                           , encodeUtf8 $ pack fileLocStr
+                           , S8.pack ")"
+                           ]
+        , "\n"
         ]
 #endif
   where
